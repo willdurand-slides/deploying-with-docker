@@ -371,14 +371,15 @@
                         Data, logs, etc. MUST live in **data only containers**:
 
                         ``` yaml
+                        # fig.yml
                         redis:
-                            image: redis
-                            volumes_from:
+                          image: redis
+                          volumes_from:
                             - dataredis
 
                         dataredis:
-                            image: busybox
-                            volumes:
+                          image: busybox
+                          volumes:
                             - /data
                         ```
 
