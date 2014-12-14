@@ -42,7 +42,7 @@
                     </section>
                     <section data-markdown>
                         <script type="text/template">
-                            ## Containers
+                            ### Containers
                             <br>
 
                             A **container** is an **operating-system level
@@ -56,7 +56,7 @@
                     </section>
                     <section data-markdown class="no-border">
                         <script type="text/template">
-                            ## Containers vs VMs
+                            ### Containers vs VMs
                             <br>
 
                             ![](images/container_vs_vm.jpg)
@@ -64,7 +64,7 @@
                     </section>
                     <section data-markdown>
                         <script type="text/template">
-                            ## Docker
+                            ### Docker
                             <br>
 
                             * Developed by Docker.inc (formerly DotCloud)
@@ -75,7 +75,7 @@
                     </section>
                     <section data-markdown class="no-border">
                         <script type="text/template">
-                            ## Docker's Architecture
+                            ### Docker's Architecture
                             <br>
 
                             ![](images/architecture.svg)
@@ -92,6 +92,7 @@
                         * **Idempotent** and **reliable** process
                         * **No** need for rollbacks
                         * Targetting **zero** downtime
+                        * Single host
                     </script>
                 </section>
 
@@ -109,7 +110,7 @@
                     </section>
                     <section data-markdown>
                         <script type="text/template">
-                            ## Twelve Factors
+                            ### Twelve Factors
                             <br>
 
                             * **One codebase** tracked in revision control,<br>many deploys
@@ -132,7 +133,7 @@
                     </section>
                     <section data-markdown>
                         <script type="text/template">
-                            ## Services
+                            ### Services
                             <br>
 
                             * Reverse proxy: [Hipache](https://github.com/hipache/hipache) (+ [Redis](http://redis.io/))
@@ -143,7 +144,7 @@
                     </section>
                     <section data-markdown class="no-border">
                         <script type="text/template">
-                            ## Architecture
+                            ### Overall Architecture
                             <br>
 
                             ![](images/architecture-sl.png)
@@ -151,7 +152,7 @@
                     </section>
                     <section data-markdown class="no-border">
                         <script type="text/template">
-                            ## Application's `fig.yml`
+                            ### Application's `fig.yml`
                             <br>
 
                             ``` yaml
@@ -173,6 +174,32 @@
                                 - memcached
                                 - database
                             ```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### DNS
+                            <br>
+
+                            `example.org` <i class="fa fa-arrow-right"></i> `www.example.org`
+
+                            <br>
+                            Configured at the **DNS** level. Faster than making
+                            this redirection using the load balancer.
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### SSL
+                            <br>
+
+                            Hipache listens on ports `80` and `443`.
+
+                            Patched version of Hipache to redirect<br>HTTP traffic to HTTPS.
+                            Sort of SSL offloading.
+
+                            <br>
+                            <i class="fa fa-github"></i> [willdurand/docker-hipache](https://github.com/willdurand/docker-hipache)
                         </script>
                     </section>
                 </section>
@@ -313,60 +340,58 @@
                     </section>
                 </section>
 
-                <section>
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## Configuration
-                        </script>
-                    </section>
-                    <section data-markdown>
-                        <script type="text/template">
-                            ### DNS
-                            <br>
+                <section data-markdown>
+                    <script type="text/template">
+                        ### Fig & Environments
+                        <br>
 
-                            `example.org` <i class="fa fa-arrow-right"></i> `www.example.org`
+                        > Keep development, staging, and production as **similar** as possible<br><small><br>X. Dev/prod parity — 12 Factors</small>
 
-                            <br>
-                            Configured at the **DNS** level. Faster than making
-                            this redirection using the load balancer.
-                        </script>
-                    </section>
-                    <section data-markdown>
-                        <script type="text/template">
-                            ### SSL
-                            <br>
+                        <br>
 
-                            Hipache listens on ports `80` and `443`.
+                        ``` yaml
+                        # fig.yml.dist
+                        web:
+                            # In PRODUCTION, the line below MUST be commented:
+                            build: .
 
-                            Patched version of Hipache to redirect<br>HTTP traffic to HTTPS.
-                            Sort of SSL offloading.
+                            # In PRODUCTION, the line below must be uncommented:
+                            # image: myapp
 
-                            <br>
-                            <i class="fa fa-github"></i> [willdurand/docker-hipache](https://github.com/willdurand/docker-hipache)
-                        </script>
-                    </section>
-                    <section data-markdown>
-                        <script type="text/template">
-                            ### Fig
-                            <br>
+                            # ...
+                        ```
+                    </script>
+                </section>
 
-                            > Keep development, staging, and production as **similar** as possible<br><small><br>X. Dev/prod parity — 12 Factors</small>
+                <section data-markdown>
+                    <script type="text/template">
+                        ### Data Only Containers
+                        <br>
 
-                            <br>
+                        Data, logs, etc. MUST live in **data only containers**:
 
-                            ``` yaml
-                            # fig.yml.dist
-                            web:
-                              # In PRODUCTION, the line below MUST be commented:
-                              build: .
+                        ``` yaml
+                        redis:
+                            image: redis
+                            volumes_from:
+                            - dataredis
 
-                              # In PRODUCTION, the line below must be uncommented:
-                              # image: myapp
+                        dataredis:
+                            image: busybox
+                            volumes:
+                            - /data
+                        ```
 
-                              # ...
-                            ```
-                        </script>
-                    </section>
+                        Wanna backup? <i class="fa fa-smile-o"></i>
+
+                        ```
+                        docker run --rm \
+                            --volumes-from dataredis \
+                            -v $(pwd):/backup \
+                            busybox \
+                            tar cvf /backup/dataredis.tgz /data
+                        ```
+                    </script>
                 </section>
 
                 <section>
