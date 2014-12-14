@@ -37,7 +37,7 @@
                 <section>
                     <section data-markdown>
                         <script type="text/template">
-                            ## Introduction
+                            ## Docker In A Nutshell
                         </script>
                     </section>
                     <section data-markdown>
@@ -391,7 +391,8 @@
                             <br>
 
                             ```
-                            $ boom https://www.example.org/ -n 2000 -c 50
+                            boom https://www.example.org/ -n 2000 -c 50
+
                             Server Software: nginx/1.2.1
                             Running GET https://www.example.org/
                             Running 1000 times per 50 workers.
@@ -416,7 +417,8 @@
                             <br>
 
                             ```
-                            $ fab deploy --hide=running,stdout,stderr
+                            fab deploy --hide=running,stdout,stderr
+
                             ---> Deploying branch "awesome-feature"
                             ---> Building artifact
                             ---> Artifact id is: "build-8fe47fc"
