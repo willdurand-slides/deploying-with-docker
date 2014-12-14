@@ -3,17 +3,15 @@
     <head>
         <meta charset="utf-8">
 
-        <title>William Durand</title>
+        <title>Docker, Ceci N'Est Pas Une Introduction | William Durand</title>
 
         <link rel="stylesheet" href="reveal.js/css/reveal.min.css">
-        <link rel="stylesheet" href="reveal.js/css/theme/simple.css" id="theme">
+        <link rel="stylesheet" href="css/theme.css" id="theme">
 
         <!-- For syntax highlighting -->
         <link rel="stylesheet" href="reveal.js/lib/css/zenburn.css">
 
-        <!--
-        <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
-        -->
+        <link rel="stylesheet" href="fontawesome/css/font-awesome.min.css">
 
         <link rel="stylesheet" href="css/custom.css">
 
@@ -31,18 +29,434 @@
         <div class="reveal">
             <div class="slides">
                 <section>
-                    <h1 class="title"></h1>
-                    <em>William Durand - October 17th, 2014</em>
+                    <p><img src="images/docker.png" class="no-border"></p>
+                    <p>(Ceci N'Est Pas Une Introduction)</p>
+                    <p><small><em>William Durand - December 16th, 2014</em></small></p>
                 </section>
 
                 <section>
                     <section data-markdown>
                         <script type="text/template">
-                            ## Title
+                            ## Introduction
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Containers
+                            <br>
+
+                            A **container** is an **operating-system level
+                            virtualization** method that provides a completely
+                            **isolated environment**, simulating a closed
+                            system running on a single host.
+
+                            <br>
+                            _chroot, OpenVZ, Jail, LXC, etc._
+                        </script>
+                    </section>
+                    <section data-markdown class="no-border">
+                        <script type="text/template">
+                            ## Containers vs VMs
+                            <br>
+
+                            ![](images/container_vs_vm.jpg)
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Docker
+                            <br>
+
+                            * Developed by Docker.inc (formerly DotCloud)
+                            * Open platform for developing, shipping,<br>and running applications
+                            * Use [libcontainer](http://blog.docker.com/2014/03/docker-0-9-introducing-execution-drivers-and-libcontainer/)
+                              as execution driver
+                        </script>
+                    </section>
+                    <section data-markdown class="no-border">
+                        <script type="text/template">
+                            ## Docker's Architecture
+                            <br>
+
+                            ![](images/architecture.svg)
                         </script>
                     </section>
                 </section>
-            </section>
+
+                <section data-markdown>
+                    <script type="text/template">
+                        ## The Plan
+                        <br>
+
+                        * **Simple** solution to deploy my application
+                        * **Idempotent** and **reliable** process
+                        * **No** need for rollbacks
+                        * Targetting **zero** downtime
+                    </script>
+                </section>
+
+                <section data-markdown>
+                    <script type="text/template">
+                        ## How?
+                    </script>
+                </section>
+
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Methodology
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Twelve Factors
+                            <br>
+
+                            * **One codebase** tracked in revision control,<br>many deploys
+                            * Store **config in the environment**
+                            * Keep development, staging, and production<br>as **similar** as possible
+
+                            <br>
+                            <small>
+                                [The Twelve-Factor App](http://clermontech.org/talks/api-hour-11/2-aymeric-brisse-the-twelve-factor-app.html) by [@aymericbrisse](https://twitter.com/aymericbrisse)
+                            </small>
+                        </script>
+                    </section>
+                </section>
+
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Infrastructure
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Services
+                            <br>
+
+                            * Reverse proxy: [Hipache](https://github.com/hipache/hipache) (+ [Redis](http://redis.io/))
+                            * Backend: [Nginx](http://nginx.org/) + [PHP-FPM](http://php-fpm.org/) + **application**
+                            * Sessions are stored into [memcached](http://memcached.org/)
+                            * Database (at some point...)
+                        </script>
+                    </section>
+                    <section data-markdown class="no-border">
+                        <script type="text/template">
+                            ## Architecture
+                            <br>
+
+                            ![](images/architecture-sl.png)
+                        </script>
+                    </section>
+                    <section data-markdown class="no-border">
+                        <script type="text/template">
+                            ## Application's `fig.yml`
+                            <br>
+
+                            ``` yaml
+                            web:
+                              build: .
+                              expose:
+                                - "80"
+
+                              # No support for `env-file` yet...
+                              environment:
+                                - SYMFONY_ENV=dev
+                                - SYMFONY_DEBUG=1
+                                - SYMFONY__MEMCACHED_HOST=memcached
+                                - SYMFONY__MEMCACHED_PORT=11211
+                                - SYMFONY__SESSION_MEMCACHED_PREFIX=session
+                                - SYMFONY__SESSION_MEMCACHED_EXPIRE=604800
+
+                              links:
+                                - memcached
+                                - database
+                            ```
+                        </script>
+                    </section>
+                </section>
+
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Deploy
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 1. Build Artifact
+                            <br>
+
+                            ```
+                            git archive --format tar --prefix myapp/ <SHA> | (cd /tmp && tar xf -)
+                            ```
+
+                            ```
+                            cd /tmp
+                            composer install --prefer-dist --optimize-autoloader --no-dev
+                            bundle install
+                            bower install
+                            rm <USELESS/TEMPORARY FILES>
+                            ```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 2. Build Container
+                            <br>
+
+                            ```
+                            docker build -t myapp:latest .
+                            ```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 3. Push It
+                            <br>
+
+                            ```
+                            docker push
+                            ```
+
+                            <br>
+                            <i class="fa fa-info-circle"></i> Or whatever that makes the image
+                            <br>available on the production server.
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 4. Retrieve Running Containers
+                            <br>
+
+                            ```
+                            RUNNING_CIDS=$(docker ps | grep web | cut -d ' ' -f 1)
+                            ```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 5. Run The New Container
+                            <br>
+
+                            ```
+                            fig run -d --no-deps --rm web
+                            ```
+
+                            <br>
+                            <i class="fa fa-warning"></i> Booting the container may take a few seconds, wait.
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 6. Register It As Backend
+                            <br>
+
+                            ```
+                            IP=$(docker inspect --format='{{ .NetworkSettings.IPAddress }}' <CID>)
+                            ```
+
+                            ```
+                            fig run --rm rediscli rpush frontend:www.example.com "http://$IP:80"
+                            ```
+
+                            <br>
+
+                            ```
+                            # fig.yml
+                            rediscli:
+                              image: redis
+                              entrypoint: [ redis-cli, -h, redis ]
+                              links:
+                                - redis
+                            ```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 7. Unregister Previous Backends
+                            <br>
+
+                            For each container id `CID` in `$RUNNING_CIDS`, do:
+
+                            ```
+                            IP=$(docker inspect --format='{{ .NetworkSettings.IPAddress }}' <CID>)
+
+                            fig run --rm rediscli lrem frontend:www.example.com 0 "http://$IP:80"
+                            ```
+
+                            <br>
+                            <i class="fa fa-warning"></i> New backend is up and serves requests. However,
+                            previous backends may still process requests. Wait.
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 8. Stop Previous Containers
+                            <br>
+
+                            For each container id `CID` in `$RUNNING_CIDS`, do:
+
+                            ```
+                            docker stop <CID>
+                            ```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 9. Tag A Relase (And Profit!)
+                            <br>
+
+                            ![](images/profit.gif)
+                        </script>
+                    </section>
+                </section>
+
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Configuration
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### DNS
+                            <br>
+
+                            `example.org` <i class="fa fa-arrow-right"></i> `www.example.org`
+
+                            <br>
+                            Configured at the **DNS** level. Faster than making
+                            this redirection using the load balancer.
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### SSL
+                            <br>
+
+                            Hipache listens on ports `80` and `443`.
+
+                            Patched version of Hipache to redirect<br>HTTP traffic to HTTPS.
+                            Sort of SSL offloading.
+
+                            <br>
+                            <i class="fa fa-github"></i> [willdurand/docker-hipache](https://github.com/willdurand/docker-hipache)
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### Fig
+                            <br>
+
+                            > Keep development, staging, and production as **similar** as possible<br><small><br>X. Dev/prod parity — 12 Factors</small>
+
+                            <br>
+
+                            ``` yaml
+                            # fig.yml.dist
+                            web:
+                              # In PRODUCTION, the line below MUST be commented:
+                              build: .
+
+                              # In PRODUCTION, the line below must be uncommented:
+                              # image: myapp
+
+                              # ...
+                            ```
+                        </script>
+                    </section>
+                </section>
+
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Testing
+                        </script>
+                    </section>
+                    <section data-markdown class="no-border">
+                        <script type="text/template">
+                            ![](images/boom.png)
+
+                            Like [Apache Bench](http://httpd.apache.org/docs/2.2/programs/ab.html), but **better!**
+
+                            <br>
+                            <i class="fa fa-github"></i> [tarekziade/boom](https://github.com/tarekziade/boom)
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 1. Run `boom`
+                            <br>
+
+                            ```
+                            $ boom https://www.example.org/ -n 2000 -c 50
+                            Server Software: nginx/1.2.1
+                            Running GET https://www.example.org/
+                            Running 1000 times per 50 workers.
+                            [================================================================>.] 99% Done
+
+                            -------- Results --------
+                            Successful calls        1000
+                            Total time              137.1827 s
+                            Average                 6.7114 s
+                            Fastest                 2.3701 s
+                            Slowest                 9.4738 s
+                            Amplitude               7.1037 s
+
+                            -------- Status codes --------
+                            Code 200                1000 times.
+                            ```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 2. Deploy
+                            <br>
+
+                            ```
+                            $ fab deploy --hide=running,stdout,stderr
+                            ---> Deploying branch "awesome-feature"
+                            ---> Building artifact
+                            ---> Artifact id is: "build-8fe47fc"
+                            ---> Pushing artifact to the server
+                            ---> Building container
+                            ---> Finding running containers
+                            ---> Starting new container
+                            ---> Waiting while container is booting
+                            ---> Registering new backend to Hipache
+                            ---> Unregistering the previous backends from Hipache
+                            ---> Waiting before stopping the previous backends
+
+                            Done.
+                            ```
+
+                            <br>
+                            <i class="fa fa-info-circle"></i> I use [Fabric](http://www.fabfile.org/).
+                        </script>
+                    </section>
+                    <section data-markdown class="no-border">
+                        <script type="text/template">
+                            ### 3. Monitor
+                            <br>
+
+                            **E**lasticsearch, **L**ogstash, **K**ibana
+                            <br>+<br>
+                            Logstash Forwarder (_lumberjack_)
+
+                            <br>
+                            <i class="fa fa-github"></i> [willdurand/docker-elk](https://github.com/willdurand/docker-elk)
+
+                            <i class="fa fa-github"></i> [willdurand/docker-logstash-forwarder](https://github.com/willdurand/docker-logstash-forwarder)
+                        </script>
+                    </section>
+                    <section data-markdown class="no-border">
+                        <script type="text/template">
+                            ![](images/kibana.png)
+                        </script>
+                    </section>
+                </section>
 
                 <section data-markdown>
                     <script type="text/template">
