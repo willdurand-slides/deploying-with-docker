@@ -244,12 +244,17 @@
                             git archive --format tar --prefix myapp/ <SHA> | (cd /tmp && tar xf -)
                             ```
 
+                            <br>
+                            **Protip:** use a Docker container to run build tools:
+
                             ```
                             cd /tmp/myapp
-                            composer install --prefer-dist --optimize-autoloader --no-dev
-                            bundle install
-                            bower install
-                            rm <USELESS/TEMPORARY FILES>
+
+                            docker run --rm -v `pwd`:/srv buildtools composer install
+                            docker run --rm -v `pwd`:/srv buildtools bundle install
+                            docker run --rm -v `pwd`:/srv buildtools bower install
+
+                            rm <USELESS/TEMP FILES>
                             ```
                         </script>
                     </section>
