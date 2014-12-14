@@ -158,10 +158,9 @@
                             ``` yaml
                             web:
                               build: .
-                              expose:
-                                - "80"
 
                               # No support for `env-file` yet...
+                              # See: https://github.com/docker/fig/pull/665
                               environment:
                                 - SYMFONY_ENV=dev
                                 - SYMFONY_DEBUG=1
@@ -176,6 +175,31 @@
                             ```
                         </script>
                     </section>
+                    <section data-markdown class="no-border">
+                        <script type="text/template">
+                            ### Application's `Dockerfile`
+                            <br>
+
+                            ```
+                            FROM debian:wheezy
+                            MAINTAINER William Durand <william.durand1@gmail.com>
+
+                            ENV DEBIAN_FRONTEND noninteractive
+
+                            RUN apt-get update -y
+                            RUN apt-get install -y nginx php5-fpm supervisor php5-memcached
+
+                            # Configure Nginx, PHP-FPM, Supervisor here
+
+                            ADD .   /app
+                            WORKDIR /app
+
+                            EXPOSE 80
+
+                            CMD [ "/usr/bin/supervisord" ]
+                            ```
+                        </script>
+                    </section>
                     <section data-markdown>
                         <script type="text/template">
                             ### DNS
@@ -185,7 +209,7 @@
 
                             <br>
                             Configured at the **DNS** level. Faster than making
-                            this redirection using the load balancer.
+                            <br>this redirection using the load balancer.
                         </script>
                     </section>
                     <section data-markdown>
@@ -195,6 +219,7 @@
 
                             Hipache listens on ports `80` and `443`.
 
+                            <br>
                             Patched version of Hipache to redirect<br>HTTP traffic to HTTPS.
                             Sort of SSL offloading.
 
@@ -220,7 +245,7 @@
                             ```
 
                             ```
-                            cd /tmp
+                            cd /tmp/myapp
                             composer install --prefer-dist --optimize-autoloader --no-dev
                             bundle install
                             bower install
@@ -230,7 +255,7 @@
                     </section>
                     <section data-markdown>
                         <script type="text/template">
-                            ### 2. Build Container
+                            ### 2. Build Container (From Artifact)
                             <br>
 
                             ```
