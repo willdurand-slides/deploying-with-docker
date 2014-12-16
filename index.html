@@ -371,61 +371,6 @@
                     </section>
                 </section>
 
-                <section data-markdown>
-                    <script type="text/template">
-                        ### Fig & Environments
-                        <br>
-
-                        > Keep development, staging, and production as **similar** as possible<br><small><br>X. Dev/prod parity — 12 Factors</small>
-
-                        <br>
-
-                        ``` yaml
-                        # fig.yml.dist
-                        web:
-                            # In PRODUCTION, the line below MUST be COMMENTED:
-                            build: .
-
-                            # In PRODUCTION, the line below must be UNCOMMENTED:
-                            # image: myapp
-
-                            # ...
-                        ```
-                    </script>
-                </section>
-
-                <section data-markdown>
-                    <script type="text/template">
-                        ### Data Only Containers
-                        <br>
-
-                        Data, logs, etc. MUST live in **data only containers**:
-
-                        ``` yaml
-                        # fig.yml
-                        redis:
-                          image: redis
-                          volumes_from:
-                            - dataredis
-
-                        dataredis:
-                          image: busybox
-                          volumes:
-                            - /data
-                        ```
-
-                        Wanna backup? <i class="fa fa-smile-o"></i>
-
-                        ```
-                        docker run --rm \
-                            --volumes-from dataredis \
-                            -v $(pwd):/backup \
-                            busybox \
-                            tar cvf /backup/dataredis.tgz /data
-                        ```
-                    </script>
-                </section>
-
                 <section>
                     <section data-markdown>
                         <script type="text/template">
@@ -545,6 +490,67 @@
                     </script>
                 </section>
 
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Bonus
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### Fig & Environments
+                            <br>
+
+                            > Keep development, staging, and production as **similar** as possible<br><small><br>X. Dev/prod parity — 12 Factors</small>
+
+                            <br>
+
+                            ``` yaml
+                            # fig.yml.dist
+                            web:
+                                # In PRODUCTION, the line below MUST be COMMENTED:
+                                build: .
+
+                                # In PRODUCTION, the line below must be UNCOMMENTED:
+                                # image: myapp
+
+                                # ...
+                            ```
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### Data Only Containers
+                            <br>
+
+                            Data, logs, etc. MUST live in **data only containers**:
+
+                            ``` yaml
+                            # fig.yml
+                            redis:
+                            image: redis
+                            volumes_from:
+                                - dataredis
+
+                            dataredis:
+                            image: busybox
+                            volumes:
+                                - /data
+                            ```
+
+                            Wanna backup? <i class="fa fa-smile-o"></i>
+
+                            ```
+                            docker run --rm \
+                                --volumes-from dataredis \
+                                -v $(pwd):/backup \
+                                busybox \
+                                tar cvf /backup/dataredis.tgz /data
+                            ```
+                        </script>
+                    </section>
+                </section>
             </div>
         </div>
         <script type="text/javascript" src="reveal.js/lib/js/head.min.js"></script>
