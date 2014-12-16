@@ -137,7 +137,7 @@
                             <br>
 
                             * Reverse proxy: [Hipache](https://github.com/hipache/hipache) (+ [Redis](http://redis.io/))
-                            * Backend: [Nginx](http://nginx.org/) + [PHP-FPM](http://php-fpm.org/) + **application**
+                            * Backend: [Nginx](http://nginx.org/) + [HHVM](http://hhvm.com/) + **application**
                             * Sessions are stored into [memcached](http://memcached.org/)
                             * Database (at some point...)
                         </script>
@@ -186,14 +186,15 @@
 
                             ENV DEBIAN_FRONTEND noninteractive
 
-                            RUN apt-get update -y
-                            RUN apt-get install -y nginx php5-fpm supervisor php5-memcached
+                            # Let APT know about HHVM repo...
 
-                            # Configure Nginx, PHP-FPM, Supervisor here
+                            RUN apt-get update -y
+                            RUN apt-get install -y nginx hhvm supervisor
+
+                            # Configure Nginx, HHVM, Supervisor here...
 
                             ADD .   /app
                             WORKDIR /app
-
                             EXPOSE 80
 
                             CMD [ "/usr/bin/supervisord" ]
