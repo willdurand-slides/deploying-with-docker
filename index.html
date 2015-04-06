@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
 
-        <title>Docker, Ceci N'Est Pas Une Introduction | William Durand</title>
+        <title>Deploying with Docker | William Durand</title>
 
         <link rel="stylesheet" href="reveal.js/css/reveal.min.css">
         <link rel="stylesheet" href="css/theme.css" id="theme">
@@ -26,12 +26,13 @@
         <![endif]-->
     </head>
     <body>
+        <img src="images/symfony-tn.png" id="logo">
+
         <div class="reveal">
             <div class="slides">
                 <section>
-                    <p><img src="images/docker.png" class="no-border"></p>
-                    <p>(Ceci N'Est Pas Une Introduction)</p>
-                    <p><small><em>William Durand - December 16th, 2014</em></small></p>
+                    <h2>Deploying with<img src="images/docker.png" class="no-border"></h2>
+                    <p><small><em>William Durand - April 17th, 2015</em></small></p>
                 </section>
 
                 <section>
@@ -119,7 +120,7 @@
 
                             <br>
                             <small>
-                                [The Twelve-Factor App](http://clermontech.org/talks/api-hour-11/2-aymeric-brisse-the-twelve-factor-app.html) by [@aymericbrisse](https://twitter.com/aymericbrisse)
+                                [12factor.net](http://12factor.net/)
                             </small>
                         </script>
                     </section>
@@ -175,6 +176,37 @@
                             ```
                         </script>
                     </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### Data Only Containers
+                            <br>
+
+                            Data, logs, etc. MUST live in **data only containers**:
+
+                            ``` yaml
+                            # fig.yml
+                            redis:
+                              image: redis
+                              volumes_from:
+                                - dataredis
+
+                            dataredis:
+                              image: busybox
+                              volumes:
+                                - /data
+                            ```
+
+                            Wanna backup? <i class="fa fa-smile-o"></i>
+
+                            ```
+                            docker run --rm \
+                                --volumes-from dataredis \
+                                -v $(pwd):/backup \
+                                busybox \
+                                tar cvf /backup/dataredis.tgz /data
+                            ```
+                        </script>
+                    </section>
                     <section data-markdown class="no-border">
                         <script type="text/template">
                             ### Application's `Dockerfile`
@@ -195,7 +227,7 @@
 
                             ADD .   /app
                             WORKDIR /app
-                            EXPOSE 80
+                            EXPOSE  80
 
                             CMD [ "/usr/bin/supervisord" ]
                             ```
@@ -374,7 +406,7 @@
                 <section>
                     <section data-markdown>
                         <script type="text/template">
-                            ## Testing
+                            ## Benchmarking
                         </script>
                     </section>
                     <section data-markdown class="no-border">
@@ -462,6 +494,129 @@
                     </section>
                 </section>
 
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Testing
+                        </script>
+                    </section>
+                    <section data-markdown class="no-border">
+                        <script type="text/template">
+                            ![](images/logo-wercker.png)
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### `wercker.yml`
+                            <br>
+
+                            ```
+box: wercker-labs/docker
+build:
+  steps:
+    - script:
+        name: install Fig
+        code: |
+          curl -L https://.../fig-`uname -s`-`uname -m` > fig ; chmod +x fig
+          sudo mv fig /usr/local/bin/fig
+
+     - ...
+                            ```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 1. Build Artifact
+                            <br>
+
+                            ```
+- script:
+    name: build artifact
+    code: |
+      FAB_DIST_DIR="$WERCKER_OUTPUT_DIR" \
+      bin/fabric build:commit="$WERCKER_GIT_COMMIT"
+                            ```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 2. Build a Docker Image
+                            <br>
+
+                            ```
+- script:
+    name: build image
+    code: |
+      cd "$WERCKER_OUTPUT_DIR/build-$WERCKER_GIT_COMMIT"
+      fig -f "$WERCKER_SOURCE_DIR/fig.yml.dist" build web
+                            ```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 3. Run a Container
+                            <br>
+
+                            ```
+- script:
+    name: run container
+    code: |
+      cd "$WERCKER_OUTPUT_DIR/build-$WERCKER_GIT_COMMIT"
+      fig -f "$WERCKER_SOURCE_DIR/fig.yml.dist" run -d web
+      sleep 20
+                            ```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### 4. Run Tests \o/
+                            <br>
+
+                            ```
+- script:
+    name: run test suite
+    code: |
+      export IP=$(docker inspect --format='{{ .NetworkSettings.IPAddress }}'\
+      "$(docker ps -q | head -n 1)")
+
+      echo "IP address is: $IP" | tee "$WERCKER_REPORT_MESSAGE_FILE"
+      bin/test
+                            ```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### Smoke Testing
+                            <br>
+
+                            ``` ruby
+require "httparty"
+
+describe "The web server" do
+  before(:all) do
+    ip = ENV["IP"] or 'localhost'
+    @response = HTTParty.get(
+      "http://#{ip}:80",
+      :basic_auth => { :username => "privatedemo", :password => "please" }
+    )
+  end
+
+  it "should return a 200 status code" do
+    @response.code.should == 200
+  end
+end
+                            ```
+
+                            [RSpec](http://rspec.info/) + [httparty](https://github.com/jnunemaker/httparty) = &hearts;
+                        </script>
+                    </section>
+                    <section data-markdown class="no-border">
+                        <script type="text/template">
+                            ![](images/wercker.png)
+                        </script>
+                    </section>
+                </section>
+
                 <section data-markdown>
                     <script type="text/template">
                         ## Thank You.
@@ -519,37 +674,6 @@
                         </script>
                     </section>
 
-                    <section data-markdown>
-                        <script type="text/template">
-                            ### Data Only Containers
-                            <br>
-
-                            Data, logs, etc. MUST live in **data only containers**:
-
-                            ``` yaml
-                            # fig.yml
-                            redis:
-                            image: redis
-                            volumes_from:
-                                - dataredis
-
-                            dataredis:
-                            image: busybox
-                            volumes:
-                                - /data
-                            ```
-
-                            Wanna backup? <i class="fa fa-smile-o"></i>
-
-                            ```
-                            docker run --rm \
-                                --volumes-from dataredis \
-                                -v $(pwd):/backup \
-                                busybox \
-                                tar cvf /backup/dataredis.tgz /data
-                            ```
-                        </script>
-                    </section>
                 </section>
             </div>
         </div>
