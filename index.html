@@ -410,19 +410,23 @@
                     </section>
                     <section data-markdown>
                         <script type="text/template">
-                            ### *My* Vision
+                            ### This Is *My* Vision
                             <br>
 
-                            * Use [Phinx](https://phinx.org/) to write your migration scripts
-                            * Put you migration scripts under version control
+                            * Use [Phinx](https://phinx.org/) (or
+                            [Flyway](http://flywaydb.org/)) to write your
+                            migration scripts
+                            * Put you migration scripts **under version control**
+                            * **Test** your migration scripts
                             * Applying your migration scripts should be done
                             asynchronously (i.e. not tied to a deployment)
-                            * This is **tricky**!
+                            * This is *tricky* (i.e. not easy)
+                            * **You need a plan**!
                         </script>
                     </section>
                     <section data-markdown>
                         <script type="text/template">
-                            ### Adding New Columns/Tables
+                            ### Adding A New Column/Table
                             <br>
 
                             1. Prepare your migration **before** modifying your code
@@ -432,38 +436,68 @@
                     </section>
                     <section data-markdown>
                         <script type="text/template">
-                            ### Renaming Columns/Tables
+                            ### Modifying A Column Type
+                            <br>
+
+                            1. Create a new column with the new type as a migration
+                            2. Apply your migration
+                            3. Create a migration to populate the new column
+                            4. Apply your second migration
+                            5. Update your code to use this new column (your code
+                            should deal with both columns)
+                            6. Rename the first column as "deprecated", and the new
+                            one using the original name
+                            7. Remove hacks introduced in 5
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### Renaming A Column/Table
                             <br>
 
                             1. Create a new column or table with the new name
                             rather than "renaming" it
                             2. Apply your migration
-                            3. Your code should use the new column/table *but*
+                            3. Update your code to use the new column/table *but*
                             keep using the former
-                            4. Wait for a "maintenance" mode to move data from
-                            the old column/table to the new one, and remove the
-                            old column/table
-                            5. Clean up your code
+                            4. Create a migration to populate the new column/table
+                            5. Apply your migration
+                            6. Update your code to use the new column/table
+                            6. Rename the former column/table as "deprecated"
+                            7. Remove hacks introduced in 3
                         </script>
                     </section>
                     <section data-markdown>
                         <script type="text/template">
-                            ### Deleting Columns/Tables
+                            ### Deleting A Column/Table
+                            <br>
+
+                            Rename it rather than deleting it.  Wait for a
+                            **maintenance party** to delete `*_deprecated`
+                            columns and/or tables.
+
+                            <br>
+
+                            **Protip:** when marking a column/table as
+                            **deprecated**, add the date too:
+                            `_deprecated_2015_01_01`.
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
                             ### Making Changes On The Data
                             <br>
 
-                            Avoid it as long as you can.
+                            Avoid it as long as you can, but
+                            sometimes,<br>there are no other alternatives.
 
-                            This implies a **maintenance** mode: **be
-                            careful!**
+                            This implies a **maintenance** mode: **be careful!**
 
                             <br>
 
-                            1. Your code should be updated to ignore the column
-                            or table under deletion
-                            2. Put your service in maintenance mode
-                            3. Apply your changes
-                            4. Put your service back online
+                            1. Put your service in maintenance mode
+                            2. Apply your changes
+                            3. Put your service back online
                         </script>
                     </section>
                 </section>
