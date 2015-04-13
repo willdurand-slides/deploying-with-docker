@@ -82,6 +82,11 @@
                             ![](images/architecture.svg)
                         </script>
                     </section>
+                    <section data-markdown class="no-border">
+                        <script type="text/template">
+                            ### [Try It!](https://www.docker.com/tryit/)
+                        </script>
+                    </section>
                 </section>
 
                 <section data-markdown>
@@ -94,12 +99,6 @@
                         * **No** need for rollbacks
                         * Targetting **zero** downtime
                         * Single host
-                    </script>
-                </section>
-
-                <section data-markdown>
-                    <script type="text/template">
-                        ## How?
                     </script>
                 </section>
 
@@ -140,7 +139,7 @@
                             * Reverse proxy: [Hipache](https://github.com/hipache/hipache) (+ [Redis](http://redis.io/))
                             * Backend: [Nginx](http://nginx.org/) + [HHVM](http://hhvm.com/) + **application**
                             * Sessions are stored into [memcached](http://memcached.org/)
-                            * Database (at some point...)
+                            * Database (MySQL)
                         </script>
                     </section>
                     <section data-markdown class="no-border">
@@ -214,7 +213,7 @@
 
                             ```
                             FROM debian:wheezy
-                            MAINTAINER William Durand <william.durand1@gmail.com>
+                            MAINTAINER William Durand <will@drnd.me>
 
                             ENV DEBIAN_FRONTEND noninteractive
 
@@ -406,6 +405,72 @@
                 <section>
                     <section data-markdown>
                         <script type="text/template">
+                            ## Database Migrations
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### *My* Vision
+                            <br>
+
+                            * Use [Phinx](https://phinx.org/) to write your migration scripts
+                            * Put you migration scripts under version control
+                            * Applying your migration scripts should be done
+                            asynchronously (i.e. not tied to a deployment)
+                            * This is **tricky**!
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### Adding New Columns/Tables
+                            <br>
+
+                            1. Prepare your migration **before** modifying your code
+                            2. Apply your migration
+                            3. Update your code
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### Renaming Columns/Tables
+                            <br>
+
+                            1. Create a new column or table with the new name
+                            rather than "renaming" it
+                            2. Apply your migration
+                            3. Your code should use the new column/table *but*
+                            keep using the former
+                            4. Wait for a "maintenance" mode to move data from
+                            the old column/table to the new one, and remove the
+                            old column/table
+                            5. Clean up your code
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### Deleting Columns/Tables
+                            ### Making Changes On The Data
+                            <br>
+
+                            Avoid it as long as you can.
+
+                            This implies a **maintenance** mode: **be
+                            careful!**
+
+                            <br>
+
+                            1. Your code should be updated to ignore the column
+                            or table under deletion
+                            2. Put your service in maintenance mode
+                            3. Apply your changes
+                            4. Put your service back online
+                        </script>
+                    </section>
+                </section>
+
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
                             ## Benchmarking
                         </script>
                     </section>
@@ -430,7 +495,7 @@
                             Server Software: nginx/1.2.1
                             Running GET https://www.example.org/
                             Running 2000 times per 50 workers.
-                            [================================================================>.] 99% Done
+                            [====================================================>.] 99% Done
 
                             -------- Results --------
                             Successful calls        2000
